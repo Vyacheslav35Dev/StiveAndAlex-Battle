@@ -4,145 +4,193 @@ using UnityEngine;
 
 public class CharacterModel
 {
+    // List of character stats
     public List<Stat> Stats { get; private set; }
+    // List of active buffs
     public List<Buff> Buffs { get; private set; }
 
     private float _maxHealth;
-    
+
+    /// <summary>
+    /// Constructor initializes stats and buffs based on settings.
+    /// </summary>
+    /// <param name="settings">Character data settings</param>
+    /// <param name="activateBuffs">Whether to activate buffs</param>
     public CharacterModel(Data settings, bool activateBuffs)
     {
-        var statsEnternal = new List<Stat>();
-        foreach (var statSettings in settings.stats.ToList())
+        // Initialize stats from settings
+        Stats = new List<Stat>();
+        foreach (var statSettings in settings.stats)
         {
-            statsEnternal.Add(new Stat(statSettings.id, statSettings.title, statSettings.icon, statSettings.value));
+            Stats.Add(new Stat(statSettings.id, statSettings.title, statSettings.icon, statSettings.value));
         }
-        
-        Stats = statsEnternal;
-        
-        var playerBuffs = new List<Buff>();
+
+        // Initialize buffs if activation is enabled
+        Buffs = new List<Buff>();
         if (activateBuffs)
         {
-            var count = Random.Range(settings.settings.buffCountMin, settings.settings.buffCountMax);
-            for (int i = 0; i < count; i++)
+            int count = Random.Range(settings.settings.buffCountMin, settings.settings.buffCountMax + 1); // +1 because Range is exclusive on upper bound
+
+            var availableBuffs = settings.buffs.ToList();
+
+            // Shuffle the buffs list for randomness
+            availableBuffs.Shuffle();
+
+            for (int i = 0; i < count && availableBuffs.Count > 0; i++)
             {
-                var index = Random.Range(0, settings.buffs.Length);
+                int index = Random.Range(0, availableBuffs.Count);
+                var selectedBuff = availableBuffs[index];
+
                 if (!settings.settings.allowDuplicateBuffs)
                 {
-                    var duplicate = playerBuffs.FirstOrDefault(x => x.id == settings.buffs[index].id);
-                    if (duplicate == null)
+                    // Avoid duplicates
+                    if (!Buffs.Any(x => x.id == selectedBuff.id))
                     {
-                        playerBuffs.Add(settings.buffs[index]);
+                        Buffs.Add(selectedBuff);
                     }
                 }
                 else
                 {
-                    playerBuffs.Add(settings.buffs[index]);
+                    Buffs.Add(selectedBuff);
+                }
+
+                // Remove selected buff if duplicates are not allowed to prevent re-selection
+                if (!settings.settings.allowDuplicateBuffs)
+                {
+                    availableBuffs.RemoveAt(index);
                 }
             }
-            var buffs = settings.buffs;
-            buffs.Shuffle();
-            playerBuffs = buffs.Take(count).ToList();
         }
-        
-        Buffs = playerBuffs;
+
         Init();
     }
 
+    /// <summary>
+    /// Initializes character stats considering buffs.
+    /// </summary>
     private void Init()
     {
         var health = Stats.FirstOrDefault(x => x.id == StatType.Health);
         var armor = Stats.FirstOrDefault(x => x.id == StatType.Armor);
         var damage = Stats.FirstOrDefault(x => x.id == StatType.Damage);
         var vampirism = Stats.FirstOrDefault(x => x.id == StatType.Vampirism);
-        
-        float _health = health?.value ?? 0;
-        float _armor = armor?.value ?? 0;
-        float _damage = damage?.value ?? 0;
-        float _vampirerism = vampirism?.value ?? 0;
-        
+
+        float baseHealth = health?.value ?? 0f;
+        float baseArmor = armor?.value ?? 0f;
+        float baseDamage = damage?.value ?? 0f;
+        float baseVampirism = vampirism?.value ?? 0f;
+
+        // Aggregate buff effects
         foreach (var buff in Buffs)
         {
-            _health += buff.stats.
-                Where(buffStat => buffStat.statId == StatType.Health)
-                .Sum(buffStat => buffStat.value);
-            _armor += buff.stats.
-                Where(buffStat => buffStat.statId == StatType.Armor)
-                .Sum(buffStat => buffStat.value);
-            _damage += buff.stats.
-                Where(buffStat => buffStat.statId == StatType.Damage)
-                .Sum(buffStat => buffStat.value);
-            _vampirerism += buff.stats.
-                Where(buffStat => buffStat.statId == StatType.Vampirism)
-                .Sum(buffStat => buffStat.value);
+            baseHealth += buff.stats.Where(s => s.statId == StatType.Health).Sum(s => s.value);
+            baseArmor += buff.stats.Where(s => s.statId == StatType.Armor).Sum(s => s.value);
+            baseDamage += buff.stats.Where(s => s.statId == StatType.Damage).Sum(s => s.value);
+            baseVampirism += buff.stats.Where(s => s.statId == StatType.Vampirism).Sum(s => s.value);
         }
 
-        if (health != null) health.value = _health;
-        if (armor != null) armor.value = _armor;
-        if (damage != null) damage.value = _damage;
-        if (vampirism != null) vampirism.value = _vampirerism;
-        _maxHealth = _health;
+        // Update stats with total values
+        if (health != null) health.value = baseHealth;
+        if (armor != null) armor.value = baseArmor;
+        if (damage != null) damage.value = baseDamage;
+        if (vampirism != null) vampirism.value = baseVampirism;
+
+        _maxHealth = baseHealth;
     }
 
+    /// <summary>
+    /// Gets current health value.
+    /// </summary>
     public float GetHealth()
     {
-        var health = Stats.FirstOrDefault(x => x.id == StatType.Health);
-        return health.value;
+        return Stats.FirstOrDefault(x => x.id == StatType.Health)?.value ?? 0f;
     }
 
+    /// <summary>
+    /// Gets maximum health value.
+    /// </summary>
     public float GetMaxHealth()
     {
         return _maxHealth;
     }
 
+    /// <summary>
+    /// Gets current vampirism value.
+    /// </summary>
     public float GetVampirism()
     {
-        var vampirism = Stats.FirstOrDefault(x => x.id == StatType.Vampirism);
-        return vampirism.value;
+        return Stats.FirstOrDefault(x => x.id == StatType.Vampirism)?.value ?? 0f;
     }
 
+    /// <summary>
+    /// Calculates damage after applying armor reduction.
+    /// </summary>
     public float CalculateDamage(float damage)
     {
-        var armor = Stats.FirstOrDefault(x => x.id == StatType.Armor);
-        var finalDamage = CalculateDamage(damage, armor.value);
-        return finalDamage;
+        var armorStat = Stats.FirstOrDefault(x => x.id == StatType.Armor);
+        float armorPercent = armorStat?.value ?? 0f;
+        return CalculateDamage(damage, armorPercent);
     }
 
+    /// <summary>
+    /// Gets the attack damage value.
+    /// </summary>
     public float CalculateAttack()
     {
-        var damage = Stats.FirstOrDefault(x => x.id == StatType.Damage);
-        return damage.value;
+        return Stats.FirstOrDefault(x => x.id == StatType.Damage)?.value ?? 0f;
     }
 
-    public bool AddDamage(float damage)
-    {
-        var health = Stats.FirstOrDefault(x => x.id == StatType.Health);
-        if (health.value > damage)
-        {
-            health.value -= damage;
-            return false;
-        }
-        return true;
-    }
+   /// <summary>
+   /// Applies damage to health. Returns true if character is dead.
+   /// </summary>
+   public bool AddDamage(float damage)
+   {
+       var healthStat = Stats.FirstOrDefault(x => x.id == StatType.Health);
+       if (healthStat != null)
+       {
+           if (healthStat.value > damage)
+           {
+               healthStat.value -= damage;
+               return false; // Not dead yet
+           }
+           else
+           {
+               healthStat.value = 0; // Health can't be negative
+               return true; // Dead
+           }
+       }
+       return false; // No health stat found, assume not dead
+   }
 
-    public void AddHealth(float health)
-    {
-        var healthStat = Stats.FirstOrDefault(x => x.id == StatType.Health);
-        healthStat.value += health;
-        if (healthStat.value > _maxHealth)
-        {
-            healthStat.value = _maxHealth;
-        }
-    }
-    
-    private float CalculateDamage(float damage, float armorPercent)
-    {
-        float damageMultiplier = 1f - (armorPercent / 100f);
-        return damage * damageMultiplier;
-    }
+   /// <summary>
+   /// Adds health to the character, capped at max health.
+   /// </summary>
+   public void AddHealth(float health)
+   {
+       var healthStat = Stats.FirstOrDefault(x => x.id == StatType.Health);
+       if (healthStat != null)
+       {
+           healthStat.value += health;
+           if (healthStat.value > _maxHealth)
+               healthStat.value = _maxHealth;
+       }
+   }
 
-    public void Reset()
-    {
-        Stats.Clear();
-        Buffs.Clear();
-    }
+   /// <summary>
+   /// Calculates final damage considering armor percentage reduction.
+   /// </summary>
+   private float CalculateDamage(float damage, float armorPercent)
+   {
+       float damageMultiplier = 1f - (armorPercent / 100f);
+       return damage * damageMultiplier;
+   }
+
+   /// <summary>
+   /// Resets stats and buffs.
+   /// </summary>
+   public void Reset()
+   {
+       Stats.Clear();
+       Buffs.Clear();
+   }
 }
