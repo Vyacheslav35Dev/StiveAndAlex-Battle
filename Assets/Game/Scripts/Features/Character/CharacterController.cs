@@ -18,23 +18,10 @@ public class CharacterController
     public float TryAttack()
     {
         _view.ShowAttackEffect();
-        var stat = _model.Stats.FirstOrDefault(x => x.id == StatType.Damage);
-        if (stat == null)
-        {
-            return 0;
-        }
-
-        var damage = stat.value;
-        foreach (var buff in _model.Buffs)
-        {
-            damage += buff.stats.
-                Where(buffStat => buffStat.statId == StatType.Damage)
-                .Sum(buffStat => buffStat.value);
-        }
-        return damage;
+        return _model.GetDamage();
     }
 
-    public bool TryDamage(float damage)
+    public bool TryAddDamage(float damage)
     {
         float _finalDamage = _model.GetArmor(damage);
         
@@ -42,7 +29,8 @@ public class CharacterController
         var isDead = _model.AddDamage(_finalDamage);
         if (!isDead)
         {
-            _view.UpdateHealthBar(_model.GetHealth());
+            var percent = _model.GetHealth() / 100;
+            _view.UpdateHealthBar(percent);
             return false;
         }
         return true;

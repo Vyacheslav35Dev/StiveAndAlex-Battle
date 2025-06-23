@@ -67,7 +67,7 @@ namespace Game.Scripts.Features
         private void TryAttackAction(CharacterController attacker, CharacterController target)
         {
             var damage = attacker.TryAttack();
-            var isDead = target.TryDamage(damage);
+            var isDead = target.TryAddDamage(damage);
             if (isDead)
             {
                 _isGameOver = true;

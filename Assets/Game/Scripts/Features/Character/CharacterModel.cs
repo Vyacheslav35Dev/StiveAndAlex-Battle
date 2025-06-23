@@ -25,6 +25,11 @@ public class CharacterModel
         _armor = armor?.value ?? 0;
         _damage = damage?.value ?? 0;
     }
+    
+    public void AddBuff(Buff buff)
+    {
+        Buffs.Add(buff);
+    }
 
     public float GetHealth()
     {
@@ -49,6 +54,7 @@ public class CharacterModel
     public float GetDamage()
     {
         var _buffDamage = 0f;
+        var _vampirism = 0f;
 
         foreach (var buff in Buffs)
         {
@@ -56,6 +62,14 @@ public class CharacterModel
                 Where(buffStat => buffStat.statId == StatType.Damage)
                 .Sum(buffStat => buffStat.value);
         }
+        
+        foreach (var buff in Buffs)
+        {
+            _vampirism += buff.stats.
+                Where(buffStat => buffStat.statId == StatType.Vampirism)
+                .Sum(buffStat => buffStat.value);
+        }
+        
         return (_damage + _buffDamage);
     }
 
