@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 
 [Serializable]
 public class Data
 {
     public CameraModel cameraSettings;
     public GameModel settings;
-    public Stat[] stats;
-    public Buff[] buffs;
+    public List<Stat> stats;
+    public List<Buff> buffs;
 }
 
 [Serializable]
@@ -34,10 +35,26 @@ public class GameModel
 
 }
 
+public enum StatType
+{
+    Health,
+    Armor,
+    Damage,
+    Vampirism,
+}
+
+public enum BuffType
+{
+    Vampir,
+    Armor,
+    Super,
+    Titan,
+}
+
 [Serializable]
 public class Stat
 {
-    public int id;
+    public StatType id;
     public string title;
     public string icon;
     public float value;
@@ -47,14 +64,14 @@ public class Stat
 public class BuffStat
 {
     public float value;
-    public int statId;
+    public StatType statId;
 }
 
 [Serializable]
 public class Buff
 {
     public string icon;
-    public int id;
+    public BuffType id;
     public string title;
-    public BuffStat[] stats;
+    public List<BuffStat> stats;
 }

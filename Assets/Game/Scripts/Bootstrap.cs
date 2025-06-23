@@ -7,6 +7,7 @@ public class Bootstrap : MonoBehaviour
 
     private void Start()
     {
+        gameManager.Init();
         gameManager.Run();
     }
 }
