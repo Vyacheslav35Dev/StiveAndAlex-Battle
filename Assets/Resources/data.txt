@@ -15,7 +15,7 @@
 		"playersCount" : 2,
 		"buffCountMin" : 0,
 		"buffCountMax" : 5,
-		"allowDuplicateBuffs" : false
+		"allowDuplicateBuffs" : true
 	},
 	"stats" : [
 		{ "id" : 0, "title" : "жизнь", "value" : 100, "icon" : "hp" },

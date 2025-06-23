@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using Random = UnityEngine.Random;
 using TextAsset = UnityEngine.TextAsset;
 
 namespace Game.Scripts.Features
@@ -32,6 +33,9 @@ namespace Game.Scripts.Features
         private Data _settings;
         private bool _isGameOver;
         
+        private bool _isPlayerBuffActive;
+        private bool _isEnemyBuffActive;
+        
         public void Init()
         {
             var text = Resources.Load<TextAsset>("data");
@@ -42,8 +46,8 @@ namespace Game.Scripts.Features
         {
             cameraMover.Run(_settings.cameraSettings);
             
-            _playerModel = new CharacterModel(_settings.stats.ToList(), new List<Buff>());
-            _enemyModel = new CharacterModel(_settings.stats.ToList(), new List<Buff>());
+            _playerModel = new CharacterModel(_settings, _isPlayerBuffActive);
+            _enemyModel = new CharacterModel(_settings, _isEnemyBuffActive);
 
             _playerController = new CharacterController();
             _playerController.Init(_playerModel, playerView);
@@ -67,34 +71,56 @@ namespace Game.Scripts.Features
         private void TryAttackAction(CharacterController attacker, CharacterController target)
         {
             var damage = attacker.TryAttack();
-            var isDead = target.TryAddDamage(damage);
-            if (isDead)
+            var stateDamage = target.TryAddDamage(damage);
+            if (stateDamage.Item1)
             {
                 _isGameOver = true;
                 mainPanel.ShowRestartPopup();
                 target.Dead();
             }
+            attacker.TrySetVampireHealth(stateDamage.Item2);
         }
         
         private void OnPlayerClickBuffButton()
         {
-            _playerController.Reset();
-            _enemyController.Reset();
+            Reset();
+            if (_isPlayerBuffActive)
+            {
+                _isPlayerBuffActive = false;
+            }
+            else
+            {
+                _isPlayerBuffActive = true;
+            }
             Run();
         }
         
         private void OnEnemyClickBuffButton()
         {
+            Reset();
+            if (_isEnemyBuffActive)
+            {
+                _isEnemyBuffActive = false;
+            }
+            else
+            {
+                _isEnemyBuffActive = true;
+            }
+            Run();
+        }
+
+        private void Reset()
+        {
+            _playerModel.Reset();
+            _enemyModel.Reset();
             _playerController.Reset();
             _enemyController.Reset();
-            Run();
         }
 
         private void Restart()
         {
             _isGameOver = false;
-            _playerController.Reset();
-            _enemyController.Reset();
+            Reset();
             Run();
         }
 

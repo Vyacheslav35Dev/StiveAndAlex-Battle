@@ -70,6 +70,11 @@ public class MainPanel : MonoBehaviour
         {
             CreateStat(modelStat.icon, modelStat.value.ToString(), playerPanelRoot);
         }
+        
+        foreach (var modelBuff in characterModel.Buffs)
+        {
+            CreateBuff(modelBuff.icon, modelBuff.title, playerPanelRoot);
+        }
     }
     
     public void ShowEnemyPanelStats(CharacterModel characterModel)
@@ -79,9 +84,21 @@ public class MainPanel : MonoBehaviour
         {
             CreateStat(modelStat.icon, modelStat.value.ToString(), enemyPanelRoot);
         }
+        
+        foreach (var modelBuff in characterModel.Buffs)
+        {
+            CreateBuff(modelBuff.icon, modelBuff.title, enemyPanelRoot);
+        }
     }
 
     private void CreateStat(string icon, string value, Transform root)
+    {
+        var obj = Instantiate(statViewPrefab, root);
+        var iconSprite = Resources.Load<Sprite>("Icons/" + icon);
+        obj.Init(iconSprite, value);
+    }
+    
+    private void CreateBuff(string icon, string value, Transform root)
     {
         var obj = Instantiate(statViewPrefab, root);
         var iconSprite = Resources.Load<Sprite>("Icons/" + icon);

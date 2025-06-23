@@ -1,6 +1,5 @@
-﻿using System.Linq;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterController
 {
@@ -18,22 +17,33 @@ public class CharacterController
     public float TryAttack()
     {
         _view.ShowAttackEffect();
-        return _model.GetDamage();
+        return _model.CalculateAttack();
     }
 
-    public bool TryAddDamage(float damage)
+    public (bool, float) TryAddDamage(float damage)
     {
-        float _finalDamage = _model.GetArmor(damage);
+        float finalDamage = _model.CalculateDamage(damage);
         
-        _view.ShowTextEffect(_finalDamage.ToString(), Color.red);
-        var isDead = _model.AddDamage(_finalDamage);
+        _view.ShowTextEffect(finalDamage.ToString(), Color.red);
+        var isDead = _model.AddDamage(finalDamage);
         if (!isDead)
         {
-            var percent = _model.GetHealth() / 100;
+            var percent = _model.GetHealth() / _model.GetMaxHealth();
             _view.UpdateHealthBar(percent);
-            return false;
+            return (false, finalDamage);
         }
-        return true;
+        return (true, finalDamage);
+    }
+
+    public void TrySetVampireHealth(float damage)
+    {
+        float healAmount = damage * (_model.GetVampirism() / 100f);
+        if (healAmount == 0)
+        {
+            return;
+        }
+        _view.ShowTextEffect(healAmount.ToString(), Color.green);
+        _model.AddHealth(healAmount);
     }
     
     public void Dead()
@@ -43,6 +53,7 @@ public class CharacterController
 
     public void Reset()
     {
+        _model.Reset();
         _view.Reset();
     }
 }

@@ -6,8 +6,8 @@ public class Data
 {
     public CameraModel cameraSettings;
     public GameModel settings;
-    public List<Stat> stats;
-    public List<Buff> buffs;
+    public Stat[] stats;
+    public Buff[] buffs;
 }
 
 [Serializable]
@@ -58,6 +58,14 @@ public class Stat
     public string title;
     public string icon;
     public float value;
+    
+    public Stat(StatType id, string title, string icon, float value)
+    {
+        this.id = id;
+        this.title = title;
+        this.icon = icon;
+        this.value = value;
+    }
 }
 
 [Serializable]
@@ -73,5 +81,5 @@ public class Buff
     public string icon;
     public BuffType id;
     public string title;
-    public List<BuffStat> stats;
+    public BuffStat[] stats;
 }
