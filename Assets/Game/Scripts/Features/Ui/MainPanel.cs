@@ -65,7 +65,7 @@ public class MainPanel : MonoBehaviour
 
     public void ShowPlayerPanelStats(CharacterModel characterModel)
     {
-        Reset(playerPanelRoot);
+        ResetPanel(playerPanelRoot);
         foreach (var modelStat in characterModel.Stats)
         {
             CreateStat(modelStat.icon, modelStat.value.ToString(), playerPanelRoot);
@@ -79,7 +79,7 @@ public class MainPanel : MonoBehaviour
     
     public void ShowEnemyPanelStats(CharacterModel characterModel)
     {
-        Reset(enemyPanelRoot);
+        ResetPanel(enemyPanelRoot);
         foreach (var modelStat in characterModel.Stats)
         {
             CreateStat(modelStat.icon, modelStat.value.ToString(), enemyPanelRoot);
@@ -105,7 +105,7 @@ public class MainPanel : MonoBehaviour
         obj.Init(iconSprite, value);
     }
 
-    private void Reset(Transform parent)
+    private void ResetPanel(Transform parent)
     {
         for (int i = parent.childCount - 1; i >= 0; i--)
         {
@@ -166,6 +166,17 @@ public class MainPanel : MonoBehaviour
     {
         restartPopup.SetActive(false);
         OnRestartAction?.Invoke();
+    }
+
+    public void Reset()
+    {
+        playerActivateBuff.gameObject.SetActive(true);
+        playerDeActivateBuff.gameObject.SetActive(false);
+        playerActivateBuff.gameObject.SetActive(true);
+        playerDeActivateBuff.gameObject.SetActive(false);
+        
+        ResetPanel(playerPanelRoot);
+        ResetPanel(enemyPanelRoot);
     }
 
     private void OnEnable()
